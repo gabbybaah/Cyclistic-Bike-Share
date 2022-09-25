@@ -1,0 +1,908 @@
+---Creating new colums `ride_duration`, `ride_date` and `day_of_week` required for analysis
+
+---create new table for cleaned January data
+
+select
+	count(distinct ride_id), ---remove duplicate ride_id
+	rideable_type,
+	member_casual,
+	---calculating the time difference in seconds & dividing by 60 to get minutes
+	---alot of correct data is removed if difference is calculated in minutes
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) AS ride_duration,
+	CONVERT(DATE, started_at) AS ride_date,  ---convert datetime to date 
+	format((CONVERT(DATE, started_at)), 'MMMM') AS ride_month,  ---convert datetime to Month
+	DATENAME(DW, (DATEPART(weekday, started_at))) AS day_of_week,  ---finding day_of_week for weekly data analysis
+	DATEPART(WK, started_at) AS week_number,  ---to find weekly bike trends
+	start_lat + ', ' + start_lng AS start_loc   --- Concatenate GPS Loc for ride commencement 
+from[dbo].[dec]
+where 
+	---filtering for ride_duration above 0.00 seconds AND removing null values
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) > 0.00 
+	AND start_lat + ', ' + start_lng IS NOT NULL AND ride_id IS NOT NULL AND 
+	start_station_id IS NOT NULL AND start_station_name IS NOT NULL
+group by 
+	rideable_type, member_casual, started_at, ended_at, start_lat + ', ' + start_lng
+order by
+	week_number
+
+
+select * from [dbo].[feb_stats]
+
+
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+	INTO [monthly_year_overview]
+from [dbo].[df_1]
+group by
+	member_casual, ride_month
+UNION 
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_2]
+group by
+	member_casual, ride_month
+UNION 
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_3]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_4]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_5]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_6]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_7]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_8]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_9]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_10]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_11]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_12]
+group by
+	member_casual, ride_month
+ORDER BY
+	ride_month 
+
+
+--- Summary statistics for the month of January into a january table `jan_stats`
+
+select 
+	count(distinct start_loc) as number_of_location,
+	count(distinct ride_id) as number_of_rides,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	rideable_type,
+	day_of_week,
+	member_casual
+	INTO [dec_stats]
+from [dbo].[df_12]
+group by
+	member_casual, rideable_type, day_of_week
+ORDER by
+	day_of_week, member_casual, rideable_type
+
+--- Summary statistics for the entire year based each day_of_ week
+
+select 
+	DATEPART(WK, ride_date) AS week_number,
+	count(distinct ride_id) as number_of_rides,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	rideable_type,
+	member_casual
+	INTO [weekly_trends_year_stats]
+from [dbo].[cyclistic_df]
+group by
+	member_casual, rideable_type, DATEPART(WK, ride_date)
+ORDER by
+	DATEPART(WK, ride_date), member_casual, rideable_type
+
+
+	INTO [weekly_trends_year_stats]
+
+
+INTO [feb_stats]
+
+select * from [dbo].[jan_stats]
+
+select 
+	distinct start_station_name as ride_station,
+	start_station_id as station_id
+from [dbo].[jan]
+where 
+	start_station_name IS NOT NULL
+group by start_station_name, start_station_id
+
+---statistics based on the locations where the rides were started for find trends in different locations
+select
+	distinct start_lat + ', ' + start_lng AS start_loc,   --- Concatenate GPS Loc for ride commencement
+	count(start_lng) as total_per_location,  ---remove duplicate
+	rideable_type,
+	member_casual,
+	---calculating the time difference in seconds & dividing by 60 to get minutes
+	---alot of correct data is removed if difference is calculated in minutes
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) AS ride_duration,
+	CONVERT(DATE, started_at) AS ride_date,  ---convert datetime to date 
+	format((CONVERT(DATE, started_at)), 'MMMM') AS ride_month,  ---convert datetime to Month
+	DATENAME(DW, (DATEPART(weekday, started_at))) AS day_of_week,  ---finding day_of_week for weekly data analysis
+	DATEPART(WK, started_at) AS week_number  ---to find weekly bike trends 
+	
+from [dbo].[raw_df]
+where 
+	---filtering for ride_duration above 0.00 seconds AND removing null values
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) > 0.00 
+	AND start_lat + ', ' + start_lng IS NOT NULL AND ride_id IS NOT NULL AND 
+	start_station_id IS NOT NULL AND start_station_name IS NOT NULL
+group by
+	start_lat + ', ' + start_lng, rideable_type, member_casual, started_at, ended_at
+order by
+	week_number asc, day_of_week 
+
+
+
+select * from [dbo].[year_loc_stat]
+
+
+select
+	distinct start_loc as start_point,
+	count(start_loc) as total_per_location,
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_10]
+group by
+	ride_month, start_loc, member_casual
+
+
+
+/* Data cleaning 
+changing columns from `varchar` to appropriate data types
+and creating new tables
+*/
+
+/*View dataset schema with Alt+F1 */
+select *
+from [dbo].[jan]
+
+/* Alter statements to change column datatypes for all tables*/
+
+ALTER TABLE [dbo].[jan]
+ALTER COLUMN started_at DATETIME;
+ALTER TABLE [dbo].[jan]
+ALTER COLUMN ended_at DATETIME
+
+ALTER TABLE [dbo].[feb]
+ALTER COLUMN started_at DATETIME;
+ALTER TABLE [dbo].[feb]
+ALTER COLUMN ended_at DATETIME
+
+ALTER TABLE [dbo].[mar]
+ALTER COLUMN started_at DATETIME;
+ALTER TABLE [dbo].[mar]
+ALTER COLUMN ended_at DATETIME
+
+ALTER TABLE [dbo].[apr]
+ALTER COLUMN started_at DATETIME;
+ALTER TABLE [dbo].[apr]
+ALTER COLUMN ended_at DATETIME
+
+ALTER TABLE [dbo].[may]
+ALTER COLUMN started_at DATETIME;
+ALTER TABLE [dbo].[may]
+ALTER COLUMN ended_at DATETIME
+
+ALTER TABLE [dbo].[jun]
+ALTER COLUMN started_at DATETIME;
+ALTER TABLE [dbo].[jun]
+ALTER COLUMN ended_at DATETIME
+
+ALTER TABLE [dbo].[jul]
+ALTER COLUMN started_at DATETIME;
+ALTER TABLE [dbo].[jul]
+ALTER COLUMN ended_at DATETIME
+
+ALTER TABLE [dbo].[aug]
+ALTER COLUMN started_at DATETIME;
+ALTER TABLE [dbo].[aug]
+ALTER COLUMN ended_at DATETIME
+
+ALTER TABLE [dbo].[spt]
+ALTER COLUMN started_at DATETIME;
+ALTER TABLE [dbo].[spt]
+ALTER COLUMN ended_at DATETIME
+
+ALTER TABLE [dbo].[oct]
+ALTER COLUMN started_at DATETIME;
+ALTER TABLE [dbo].[oct]
+ALTER COLUMN ended_at DATETIME
+
+ALTER TABLE [dbo].[nov]
+ALTER COLUMN started_at DATETIME;
+ALTER TABLE [dbo].[nov]
+ALTER COLUMN ended_at DATETIME
+
+ALTER TABLE [dbo].[dec]
+ALTER COLUMN started_at DATETIME;
+ALTER TABLE [dbo].[dec]
+ALTER COLUMN ended_at DATETIME
+
+
+/* Creating new colums required for analysis 
+`ride_duration`, 
+`ride_date`, 
+`ride_month`,
+`week_number`,
+`start_loc`, and 
+`day_of_week` 
+
+*/
+---create new table for cleaned January data labeled `df_1` with the query below
+
+select
+	DISTINCT ride_id, ---remove duplicate ride_id
+	rideable_type,
+	member_casual,
+	---calculating the time difference in seconds & dividing by 60 to get minutes
+	---alot of correct data is removed if difference is calculated in minutes
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) AS ride_duration,
+	CONVERT(DATE, started_at) AS ride_date,  ---convert datetime to date 
+	format((CONVERT(DATE, started_at)), 'MMMM') AS ride_month,  ---convert datetime to Month
+	DATENAME(DW, (DATEPART(weekday, started_at))) AS day_of_week,  ---finding day_of_week for weekly data analysis
+	DATEPART(WK, started_at) AS week_number,  ---to find weekly bike trends
+	start_lat + ', ' + start_lng AS start_loc   --- Concatenate GPS Loc for ride commencement 
+	INTO [df_1]  ---Data inserted into New table
+from[dbo].[jan]
+where 
+	---filtering for ride_duration above 0.00 seconds AND removing null values
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) > 0.00 
+	AND start_lat + ', ' + start_lng IS NOT NULL AND ride_id IS NOT NULL
+
+/* Applied the query for different months to create new tables from cleaned and 
+filtered data for each month as follows
+January = df_1
+February = df_2 + .....+n
+*/
+
+
+---Filtering out ride_duration `<= 0` as it will not be relevant to the analysis
+---6 rows had either `<=0` seconds or error in the data
+select 
+	DISTINCT ride_id,
+	rideable_type,
+	started_at,
+	ended_at,
+	member_casual,
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) AS ride_duration,
+	CONVERT(DATE, started_at) AS ride_date,
+	DATEPART(weekday, started_at) AS day_of_week
+from[dbo].[jan]
+where 
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) <= 0.00
+
+
+---Filtering out ride_duration `<= 0` as it will not be relevant to the analysis
+---4 rows had either `<=0` seconds or error in the data
+
+---Filtering out ride_duration `<= 0` as it will not be relevant to the analysis
+---12 rows had either `<=0` seconds or error in the data
+
+---Filtering out ride_duration `<= 0` as it will not be relevant to the analysis
+---38 rows had either `<=0` seconds or error in the data
+
+---Filtering out ride_duration `<= 0` as it will not be relevant to the analysis
+---54 rows had either `<=0` seconds or error in the data
+
+---Filtering out ride_duration `<= 0` as it will not be relevant to the analysis
+---66 rows had either `<=0` seconds or error in the data
+
+---Filtering out ride_duration `<= 0` as it will not be relevant to the analysis
+---82 rows had either `<=0` seconds or error in the data
+
+---Filtering out ride_duration `<= 0` as it will not be relevant to the analysis
+---107 rows had either `<=0` seconds or error in the data
+
+---Filtering out ride_duration `<= 0` as it will not be relevant to the analysis
+---107 rows had either `<=0` seconds or error in the data
+
+---Filtering out ride_duration `<= 0` as it will not be relevant to the analysis
+---70 rows had either `<=0` seconds or error in the data
+
+---Filtering out ride_duration `<= 0` as it will not be relevant to the analysis
+---86 rows had either `<=0` seconds or error in the data
+
+---Filtering out ride_duration `<= 0` as it will not be relevant to the analysis
+---21 rows had either `<=0` seconds or error in the data
+
+
+--- Union function to put cleaned data together into a new table `cyclistic_df`
+select *
+INTO [cyclistic_df]
+from [dbo].[df_1]
+UNION ALL
+select * 
+from [dbo].[df_2]
+UNION ALL
+select * 
+from [dbo].[df_3]
+UNION ALL
+select * 
+from [dbo].[df_4]
+UNION ALL
+select * 
+from [dbo].[df_5]
+UNION ALL
+select * 
+from [dbo].[df_6]
+UNION ALL
+select * 
+from [dbo].[df_7]
+UNION ALL
+select * 
+from [dbo].[df_8]
+UNION ALL
+select * 
+from [dbo].[df_9]
+UNION ALL
+select * 
+from [dbo].[df_10]
+UNION ALL
+select * 
+from [dbo].[df_11]
+UNION ALL
+select * 
+from [dbo].[df_12]
+
+/* 
+General data overview and analysis
+Monthly analysis for the entire year period
+*/
+
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+	INTO [customer_stats_year]
+from [dbo].[df_1]
+group by
+	member_casual, ride_month
+UNION 
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_2]
+group by
+	member_casual, ride_month
+UNION 
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_3]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_4]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_5]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_6]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_7]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_8]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_9]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_10]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_11]
+group by
+	member_casual, ride_month
+UNION
+select
+	member_casual,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides,
+	ride_month
+from [dbo].[df_12]
+group by
+	member_casual, ride_month
+ORDER BY
+	ride_month ASC 
+
+
+--- Summary statistics for the month of January into a january table `jan_stats`
+
+select 
+	count(distinct start_loc) as number_of_location,
+	count(distinct ride_id) as number_of_rides,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	rideable_type,
+	day_of_week,
+	member_casual
+	INTO [jan_stats]
+from [dbo].[df_1]
+group by
+	member_casual, rideable_type, day_of_week
+ORDER by
+	day_of_week, member_casual, rideable_type
+
+/* this query is repeated to find the summary statistics for each month*/
+
+
+--- Summary statistics for the entire year based week_of_year
+---applicable for each day of day_of_week trends for the year
+select 
+	DATEPART(WK, ride_date) AS week_number,
+	count(distinct ride_id) as number_of_rides,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	rideable_type,
+	member_casual
+	INTO [weekly_trends_year_stats]
+from [dbo].[cyclistic_df]
+group by
+	member_casual, rideable_type, DATEPART(WK, ride_date)
+ORDER by
+	DATEPART(WK, ride_date), member_casual, rideable_type
+
+
+/* 
+statistics based on the locations where the rides were started for find trends 
+in different locations into tables
+*/
+
+select
+	distinct start_lat + ', ' + start_lng AS start_loc,   --- Concatenate GPS Loc for ride commencement
+	count(distinct ride_id) as number_of_rides,  ---remove duplicate
+	rideable_type,
+	member_casual,
+	---calculating the time difference in seconds & dividing by 60 to get minutes
+	---alot of correct data is removed if difference is calculated in minutes
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) AS ride_duration,
+	CONVERT(DATE, started_at) AS ride_date,  ---convert datetime to date 
+	format((CONVERT(DATE, started_at)), 'MMMM') AS ride_month,  ---convert datetime to Month
+	DATENAME(DW, (DATEPART(weekday, started_at))) AS day_of_week,  ---finding day_of_week for weekly data analysis
+	DATEPART(WK, started_at) AS week_number  ---to find weekly bike trends
+	INTO [jan_loc_stat]
+from[dbo].[jan]
+where 
+	---filtering for ride_duration above 0.00 seconds AND removing null values
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) > 0.00 
+	AND start_lat + ', ' + start_lng IS NOT NULL AND ride_id IS NOT NULL AND 
+	start_station_id IS NOT NULL AND start_station_name IS NOT NULL
+group by
+	start_lat + ', ' + start_lng, rideable_type, member_casual, started_at, ended_at
+order by
+	week_number asc, day_of_week 
+  
+  
+  ---Selecting relavant data for data manipulation into a new table
+---Creating new colums `ride_duration`, `ride_date` and `day_of_week` required for analysis
+
+---create new table for cleaned December data
+
+select
+	DISTINCT ride_id, ---remove duplicate ride_id
+	rideable_type,
+	started_at,
+	ended_at,
+	member_casual,
+	---calculating the time difference in seconds & dividing by 60 to get minutes
+	---alot of correct data is removed if difference is calculated in minutes
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) AS ride_duration,
+	CONVERT(DATE, started_at) AS ride_date,  ---convert datetime to date 
+	DATEPART(weekday, started_at) AS day_of_week  ---finding day_of_week for weekly data analysis
+	INTO [df_12]  ---Data inserted into New table
+
+from[dbo].[dec]
+where 
+	---filtering for ride_duration above 0.00 seconds
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) > 0.00
+
+---Filtering out ride_duration `<= 0` as it will not be relevant to the analysis
+---21 rows had either `<=0` seconds or error in the data
+
+select 
+	DISTINCT ride_id,
+	rideable_type,
+	started_at,
+	ended_at,
+	member_casual,
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) AS ride_duration,
+	CONVERT(DATE, started_at) AS ride_date,
+	DATEPART(weekday, started_at) AS day_of_week
+from[dbo].[dec]
+where 
+	CONVERT(DECIMAL(10,2),(DATEDIFF(SECOND, started_at, ended_at) / 60.00)) <= 0.00
+
+
+select *
+from [dbo].[df_2]
+
+
+select *
+INTO [raw_df]
+from [dbo].[jan]
+UNION ALL
+select * 
+from [dbo].[feb]
+UNION ALL
+select * 
+from [dbo].[mar]
+UNION ALL
+select * 
+from [dbo].[apr]
+UNION ALL
+select * 
+from [dbo].[may]
+UNION ALL
+select * 
+from [dbo].[jun]
+UNION ALL
+select * 
+from [dbo].[jul]
+UNION ALL
+select * 
+from [dbo].[aug]
+UNION ALL
+select * 
+from [dbo].[spt]
+UNION ALL
+select * 
+from [dbo].[oct]
+UNION ALL
+select * 
+from [dbo].[nov]
+UNION ALL
+select * 
+from [dbo].[dec]
+
+
+select *
+from [dbo].[jan_stats]
+
+INTO [monthly_year_overview]
+
+select
+	member_casual,
+	ride_month,
+	rideable_type,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides
+	INTO [biketype_monthly_year_overview]
+from [dbo].[df_1]
+group by
+	member_casual, ride_month, rideable_type
+UNION 
+select
+	member_casual,
+	ride_month,
+	rideable_type,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides
+from [dbo].[df_2]
+group by
+	member_casual, ride_month, rideable_type
+UNION 
+select
+	member_casual,
+	ride_month,
+	rideable_type,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides
+from [dbo].[df_3]
+group by
+	member_casual, ride_month, rideable_type
+UNION
+select
+	member_casual,
+	ride_month,
+	rideable_type,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides
+from [dbo].[df_4]
+group by
+	member_casual, ride_month, rideable_type
+UNION
+select
+	member_casual,
+	ride_month,
+	rideable_type,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides
+from [dbo].[df_5]
+group by
+	member_casual, ride_month, rideable_type
+UNION
+select
+	member_casual,
+	ride_month,
+	rideable_type,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides
+from [dbo].[df_6]
+group by
+	member_casual, ride_month, rideable_type
+UNION
+select
+	member_casual,
+	ride_month,
+	rideable_type,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides
+from [dbo].[df_7]
+group by
+	member_casual, ride_month, rideable_type
+UNION
+select
+	member_casual,
+	ride_month,
+	rideable_type,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides
+from [dbo].[df_8]
+group by
+	member_casual, ride_month, rideable_type
+UNION
+select
+	member_casual,
+	ride_month,
+	rideable_type,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides
+from [dbo].[df_9]
+group by
+	member_casual, ride_month, rideable_type
+UNION
+select
+	member_casual,
+	ride_month,
+	rideable_type,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides
+from [dbo].[df_10]
+group by
+	member_casual, ride_month, rideable_type
+UNION
+select
+	member_casual,
+	ride_month,
+	rideable_type,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides
+from [dbo].[df_11]
+group by
+	member_casual, ride_month, rideable_type
+UNION
+select
+	member_casual,
+	ride_month,
+	rideable_type,
+	AVG(ride_duration) as avg_ride_duration,
+	MAX(ride_duration) as max_ride_duration,
+	MIN(ride_duration) as min_ride_duration,
+	count(ride_id) as total_rides
+from [dbo].[df_12]
+group by
+	member_casual, ride_month, rideable_type
+ORDER BY
+	ride_month 
+
+select *
+from [dbo].[biketype_monthly_year_overview]
+
+select *
+from [dbo].[monthly_year_overview]
+
+select *
+from [dbo].[weekly_trends_year_stats]
